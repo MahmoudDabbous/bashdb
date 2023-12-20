@@ -121,9 +121,8 @@ function FillMetaTable() {
     local metaFilePath="$ROOT/$1.meta"
     touch "$metaFilePath"
 
-    echo "Enter columns name and type (e.g., column_name:type), type 'exit' when you're done:"
     echo "Available types: Text, Number, Bool"
-    echo "Example input: columnName:Text"
+    echo "Example input: colName:Text"
 
     while true; do
         read -p "> " input
@@ -147,7 +146,7 @@ function FillMetaTable() {
 
     while true; do
 
-        echo "Set the primary key (enter column name)."
+        echo "Set the primary key (enter colName)."
         read -p "> " primaryKey
 
         if grep -q "^$primaryKey:" "$metaFilePath"; then
@@ -217,18 +216,19 @@ function DeleteFromTable() {
         metaFilePath="$ROOT/$1/$tableName.meta"
         primaryKey=$(awk -F':' '/PRIMARY_KEY/{print $1}' "$metaFilePath")
 
-        read -p "Enter $primaryKey: " value
+        read -p "Enter $primaryKey value to delete: " Value
 
-        if grep -qw "^$value " "$ROOT/$1/$tableName.data"; then
-            sed -i "/^$value /d" "$ROOT/$1/$tableName.data"
-            echo "$value deleted from $tableName."
+        if grep -qw "$Value" "$ROOT/$1/$tableName.data"; then
+            sed -i "/$Value/d" "$ROOT/$1/$tableName.data"
+            echo "Data with $primaryKey '$Value' deleted from $tableName."
         else
-            echo "$value not found in $tableName."
+            echo "Data with $primaryKey '$Value' not found in $tableName."
         fi
     else
         echo "$tableName doesn't exist in the database $1."
     fi
 }
+
 
 function ConnectDB() {
     read -p "Choose database to connect to: " NameDB
@@ -279,7 +279,6 @@ function ConnectDB() {
     fi
 }
 
-## Entry Point --------------------------------
 OPTIONS=("Create DB" "List DB" "Connect to specific DB" "Delete DB" "Exit")
 
 select choice in "${OPTIONS[@]}"; do
