@@ -65,6 +65,58 @@ function DropTable() {
     fi
 }
 
+function InsertIntoTable() {
+    read -p "Enter table name: " tableName
+
+    if [ -z "$tableName" ]; then
+        echo "Table name cannot be empty."
+    elif [ -e "$ROOT/$1/$tableName.data" ]; then
+
+        metaFilePath="$ROOT/$1/$tableName.meta"
+        columns=$(cut -d':' -f1 "$metaFilePath" | tr '\n' ' ')
+        types=$(cut -d':' -f2 "$metaFilePath" | tr '\n' ' ')
+        primaryKey=$(awk -F':' '/PRIMARY_KEY/{print $1}' "$metaFilePath")
+
+        echo "Enter values for $columns (separated by spaces): "
+        read -a values
+
+        if [ ${#values[@]} -eq "$(wc -l <"$metaFilePath")" ]; then
+            valid=true
+            for i in "${!values[@]}"; do
+                colType=$(echo "$types" | cut -d' ' -f$(($i + 1)))
+                if [ "$colType" = "Number" ]; then
+                    if ! [[ ${values[$i]} =~ ^[0-9]+$ ]]; then
+                        echo "Expected type: $colType for column $i"
+                        valid=false
+                        break
+                    fi
+                elif [ "$colType" = "Bool" ]; then
+                    if [ "${values[$i]}" != "true" ] && [ "${values[$i]}" != "false" ]; then
+                        echo "Expected type: $colType for column ${columns[$i]}"
+                        valid=false
+                        break
+                    fi
+                fi
+            done
+
+            if [ "$valid" = true ]; then
+                PrimaryKeyLoc=$(echo "$columns" | tr -s ' ' '\n' | grep -n "^$primaryKey$" | cut -d':' -f1)
+                PrimaryKeyValue=${values[$((PrimaryKeyLoc - 1))]}
+                if grep -q "^$PrimaryKeyValue " "$ROOT/$1/$tableName.data"; then
+                    echo "Primary key '$PrimaryKeyValue' already exists."
+                else
+                    echo "${values[*]}" >>"$ROOT/$1/$tableName.data"
+                    echo "Data inserted successfully."
+                fi
+            fi
+        else
+            echo "Incorrect number of values entered. Expected: $(wc -l <"$metaFilePath")"
+        fi
+    else
+        echo "$tableName doesn't exist in the database $1."
+    fi
+}
+
 function FillMetaTable() {
     local metaFilePath="$ROOT/$1.meta"
     touch "$metaFilePath"
@@ -108,6 +160,7 @@ function FillMetaTable() {
         fi
     done
 }
+
 function SelectFromTable() {
     read -p "Enter table name: " tableName
 
@@ -155,6 +208,28 @@ function CreateTable() {
     fi
 }
 
+function DeleteFromTable() {
+    read -p "Enter table name: " tableName
+
+    if [ -z "$tableName" ]; then
+        echo "Table name cannot be empty."
+    elif [ -e "$ROOT/$1/$tableName.data" ]; then
+        metaFilePath="$ROOT/$1/$tableName.meta"
+        primaryKey=$(awk -F':' '/PRIMARY_KEY/{print $1}' "$metaFilePath")
+
+        read -p "Enter $primaryKey: " value
+
+        if grep -qw "^$value " "$ROOT/$1/$tableName.data"; then
+            sed -i "/^$value /d" "$ROOT/$1/$tableName.data"
+            echo "$value deleted from $tableName."
+        else
+            echo "$value not found in $tableName."
+        fi
+    else
+        echo "$tableName doesn't exist in the database $1."
+    fi
+}
+
 function ConnectDB() {
     read -p "Choose database to connect to: " NameDB
 
@@ -163,7 +238,7 @@ function ConnectDB() {
     else
         if [ -e "$ROOT/$NameDB" ]; then
 
-            OPTIONS=("Create Table" "List Tables" "Drop Table" "Insert" "Select" "Delete" "Update" "Exit")
+            OPTIONS=("Create Table" "List Tables" "Drop Table" "Insert into table" "Select from table" "Delete from table" "Update table" "Exit")
 
             select choice in "${OPTIONS[@]}"; do
 
@@ -178,13 +253,13 @@ function ConnectDB() {
                     DropTable "$NameDB"
                     ;;
                 4)
-                    # TODO: insert tables
+                    InsertIntoTable "$NameDB"
                     ;;
                 5)
                     SelectFromTable "$NameDB"
                     ;;
                 6)
-                    # TODO: delete from table
+                    DeleteFromTable "$NameDB"
                     ;;
                 7)
                     # TODO: Update table
