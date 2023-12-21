@@ -160,30 +160,71 @@ function FillMetaTable() {
     done
 }
 
-function SelectFromTable() {
+function SelectFromTableByColumn() {
+
+    read -p "Enter column names (separated by spaces): " columnNamesInput
+
+    columnNumbers=$(grep -wnE "$(echo "$columnNamesInput" | tr ' ' '|')" "$ROOT/$1/$tableName.meta" | cut -d':' -f1 | tr '\n' ',' | sed 's/,$//')
+
+    if [ -z "$columnNumbers" ]; then
+        echo "Columns not found in the table."
+    else
+        echo "$columnNamesInput"
+        cut -d' ' -f"$columnNumbers" "$ROOT/$1/$tableName.data"
+    fi
+}
+function SelectFromTableByRecord() {
+
+    read -p "Enter $primaryKey value to retrieve the record (enter * for the entire table): " primaryKeyValue
+
+    if [ -z "$primaryKeyValue" ]; then
+        echo "Primary key value cannot be empty."
+    elif grep -qw "$primaryKeyValue" "$ROOT/$1/$tableName.data"; then
+        awk -F':' '{print $1}' "$ROOT/$1/$tableName.meta" | tr '\n' ' '
+        echo ""
+        grep -w "$primaryKeyValue" "$ROOT/$1/$tableName.data"
+    else
+        echo "Record with $primaryKey '$primaryKeyValue' not found in $tableName."
+    fi
+
+}
+function Select() {
     read -p "Enter table name: " tableName
 
     if [ -z "$tableName" ]; then
         echo "Table name cannot be empty."
     elif [ -e "$ROOT/$1/$tableName.data" ]; then
-        read -p "Enter column names (separated by spaces): " columnNamesInput
+        OPTIONS=("Display the whole Table" "Select By Column" "Select By PK" "Exit Select Menu")
 
-        if [ -z "$columnNamesInput" ]; then
-            echo "No columns specified. Displaying all contents of $tableName:"
-            cat "$ROOT/$1/$tableName.data"
-            echo ""
-        else
-            columnNumbers=$(grep -wnE "$(echo "$columnNamesInput" | tr ' ' '|')" "$ROOT/$1/$tableName.meta" | cut -d':' -f1 | tr '\n' ',' | sed 's/,$//')
+        select choice in "${OPTIONS[@]}"; do
 
-            if [ -z "$columnNumbers" ]; then
-                echo "Columns not found in the table."
-            else
-                cut -d' ' -f"$columnNumbers" "$ROOT/$1/$tableName.data"
-            fi
-        fi
+            case "$REPLY" in
+            1)
+                echo "Displaying entire table:"
+                awk -F':' '{print $1}' "$ROOT/$1/$tableName.meta" | tr '\n' ' '
+                echo ""
+                cat "$ROOT/$1/$tableName.data"
+                ;;
+            2)
+                SelectFromTableByColumn "$1"
+                ;;
+            3)
+                SelectFromTableByRecord "$1"
+                ;;
+            4)
+                break
+                ;;
+            *)
+                echo "Invalid characters in the name."
+                ;;
+
+            esac
+        done
     else
         echo "$tableName doesn't exist in the database $1."
+
     fi
+
 }
 
 function CreateTable() {
@@ -229,7 +270,6 @@ function DeleteFromTable() {
     fi
 }
 
-
 function ConnectDB() {
     read -p "Choose database to connect to: " NameDB
 
@@ -256,7 +296,7 @@ function ConnectDB() {
                     InsertIntoTable "$NameDB"
                     ;;
                 5)
-                    SelectFromTable "$NameDB"
+                    Select "$NameDB"
                     ;;
                 6)
                     DeleteFromTable "$NameDB"
