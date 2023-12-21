@@ -86,7 +86,7 @@ function InsertIntoTable() {
                 colType=$(echo "$types" | cut -d' ' -f$(($i + 1)))
                 if [ "$colType" = "Number" ]; then
                     if ! [[ ${values[$i]} =~ ^[0-9]+$ ]]; then
-                        echo "Expected type: $colType for column $i"
+                        echo "Expected type: $colType for column $(($i + 1))"
                         valid=false
                         break
                     fi
@@ -111,6 +111,64 @@ function InsertIntoTable() {
             fi
         else
             echo "Incorrect number of values entered. Expected: $(wc -l <"$metaFilePath")"
+        fi
+    else
+        echo "$tableName doesn't exist in the database $1."
+    fi
+}
+
+function Update() {
+    read -p "Enter table name: " tableName
+
+    if [ -z "$tableName" ]; then
+        echo "Table name cannot be empty."
+    elif [ -e "$ROOT/$1/$tableName.data" ]; then
+
+        metaFilePath="$ROOT/$1/$tableName.meta"
+        columns=$(cut -d':' -f1 "$metaFilePath" | tr '\n' ' ')
+        types=$(cut -d':' -f2 "$metaFilePath" | tr '\n' ' ')
+        primaryKey=$(awk -F':' '/PRIMARY_KEY/{print $1}' "$metaFilePath")
+
+        read -p "Enter the $primaryKey value for the row to update: " primaryKeyValue
+
+        if grep -q "^$primaryKeyValue " "$ROOT/$1/$tableName.data"; then
+            echo "Enter updated values for $columns (separated by spaces): "
+            read -a newValues
+
+            if [ ${#newValues[@]} -eq "$(wc -l <"$metaFilePath")" ]; then
+                valid=true
+                for i in "${!newValues[@]}"; do
+                    colType=$(echo "$types" | cut -d' ' -f$(($i + 1)))
+                    if [ "$colType" = "Number" ]; then
+                        if ! [[ ${newValues[$i]} =~ ^[0-9]+$ ]]; then
+                            echo "Expected type: $colType for column $(($i + 1))"
+                            valid=false
+                            break
+                        fi
+                    elif [ "$colType" = "Bool" ]; then
+                        if [ "${newValues[$i]}" != "true" ] && [ "${newValues[$i]}" != "false" ]; then
+                            echo "Expected type: $colType for column ${columns[$i]}"
+                            valid=false
+                            break
+                        fi
+                    fi
+                done
+
+                if [ "$valid" = true ]; then
+                    PrimaryKeyLoc=$(echo "$columns" | tr -s ' ' '\n' | grep -n "^$primaryKey$" | cut -d':' -f1)
+                    PrimaryKeyValue2=${newValues[$((PrimaryKeyLoc - 1))]}
+                    if grep -q "^$PrimaryKeyValue2 " "$ROOT/$1/$tableName.data"; then
+                        echo "Primary key '$PrimaryKeyValue2' already exists."
+                    else
+                        sed -i "/^$primaryKeyValue /c ${newValues[*]}" "$ROOT/$1/$tableName.data"
+                        echo "Data updated successfully."
+                    fi
+                fi
+            else
+                echo "Incorrect number of values entered. Expected: $(wc -l <"$metaFilePath")"
+            fi
+        else
+            echo "Primary key '$primaryKeyValue' not found."
         fi
     else
         echo "$tableName doesn't exist in the database $1."
@@ -250,7 +308,6 @@ function CreateTable() {
 
 function DeleteFromTable() {
     read -p "Enter table name: " tableName
-
     if [ -z "$tableName" ]; then
         echo "Table name cannot be empty."
     elif [ -e "$ROOT/$1/$tableName.data" ]; then
@@ -302,7 +359,7 @@ function ConnectDB() {
                     DeleteFromTable "$NameDB"
                     ;;
                 7)
-                    # TODO: Update table
+                    Update "$NameDB"
                     ;;
                 8)
                     echo "Exiting..."
