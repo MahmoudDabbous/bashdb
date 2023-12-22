@@ -157,10 +157,12 @@ function Update() {
                 if [ "$valid" = true ]; then
                     PrimaryKeyLoc=$(echo "$columns" | tr -s ' ' '\n' | grep -n "^$primaryKey$" | cut -d':' -f1)
                     PrimaryKeyValue2=${newValues[$((PrimaryKeyLoc - 1))]}
+                    
                     if grep -q "^$PrimaryKeyValue2 " "$ROOT/$1/$tableName.data"; then
                         echo "Primary key '$PrimaryKeyValue2' already exists."
                     else
-                        sed -i "/^$primaryKeyValue /c ${newValues[*]}" "$ROOT/$1/$tableName.data"
+                        sed -i "/$primaryKeyValue/d" "$ROOT/$1/$tableName.data"
+                        echo "${newValues[*]}" >>"$ROOT/$1/$tableName.data"
                         echo "Data updated successfully."
                     fi
                 fi
