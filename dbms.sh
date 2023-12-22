@@ -130,6 +130,7 @@ function Update() {
         primaryKey=$(awk -F':' '/PRIMARY_KEY/{print $1}' "$metaFilePath")
 
         read -p "Enter the $primaryKey value for the row to update: " primaryKeyValue
+        old=$(grep -w "$primaryKeyValue" "$ROOT/$1/$tableName.data")
 
         if grep -q "^$primaryKeyValue " "$ROOT/$1/$tableName.data"; then
             echo "Enter updated values for $columns (separated by spaces): "
@@ -157,11 +158,12 @@ function Update() {
                 if [ "$valid" = true ]; then
                     PrimaryKeyLoc=$(echo "$columns" | tr -s ' ' '\n' | grep -n "^$primaryKey$" | cut -d':' -f1)
                     PrimaryKeyValue2=${newValues[$((PrimaryKeyLoc - 1))]}
-                    
+                    sed -i "/$primaryKeyValue/d" "$ROOT/$1/$tableName.data"
+
                     if grep -q "^$PrimaryKeyValue2 " "$ROOT/$1/$tableName.data"; then
                         echo "Primary key '$PrimaryKeyValue2' already exists."
+                        echo "${old[*]}" >>"$ROOT/$1/$tableName.data"
                     else
-                        sed -i "/$primaryKeyValue/d" "$ROOT/$1/$tableName.data"
                         echo "${newValues[*]}" >>"$ROOT/$1/$tableName.data"
                         echo "Data updated successfully."
                     fi
@@ -235,7 +237,7 @@ function SelectFromTableByColumn() {
 }
 function SelectFromTableByRecord() {
 
-    read -p "Enter $primaryKey value to retrieve the record (enter * for the entire table): " primaryKeyValue
+    read -p "Enter $primaryKey value to retrieve the record: " primaryKeyValue
 
     if [ -z "$primaryKeyValue" ]; then
         echo "Primary key value cannot be empty."
@@ -264,6 +266,7 @@ function Select() {
                 awk -F':' '{print $1}' "$ROOT/$1/$tableName.meta" | tr '\n' ' '
                 echo ""
                 cat "$ROOT/$1/$tableName.data"
+                echo ""
                 ;;
             2)
                 SelectFromTableByColumn "$1"
