@@ -90,7 +90,7 @@ Enter your choice: 1
 
 Name of the table: mytable
 
-Enter columns' names and types (one line per column)
+Enter columns names and types (one line per column)
 
 > id:Number
 > name:Text
