@@ -50,9 +50,7 @@ This script provides a menu-driven interface that allows users to perform the fo
 
 
 
-## Examples:
-
-### -Creating a Database, Connecting, and Creating a Table
+## Example: Creating a Database, Connecting, Creating, and inserting into a table
 
 #### Step 1: Creating a Database
 
@@ -72,7 +70,7 @@ Name of the database: mydatabase
 ```
 
 
-### Step 2: Connecting to the Database and Creating a Table
+#### Step 2: Connecting to the Database and Creating a Table
 
 ```bash
 Enter your choice: 3
@@ -92,14 +90,37 @@ Enter your choice: 1
 
 Name of the table: mytable
 
+Enter columns' names and types (one line per column)
+
+> id:Number
+> name:Text
+
+type "exit" when you finish entering columns
+> exit
+
+Set the primary key (enter colName)
+> id
+Primary key set to id
+
+mytable created successfully.
+
 
 ```
 
 
 
-<!-- ## -Inserting data into a table:
+#### Step 3: Inserting data into a table
 
 ```bash
+Enter your choice: 4
+
+Enter table name: mytable
+
+Enter values for id name  (separated by spaces): 
+
+1 Mahmoud
+
+Data inserted successfully.
 
 
-``` -->
+```
