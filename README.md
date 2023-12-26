@@ -48,7 +48,7 @@ This script provides a menu-driven interface that allows users to perform the fo
 
 
 
-## Example: Creating a Database, Connecting, Creating, and inserting into a table
+## Example : Creating a Database, Connecting, Creating, and inserting into a table
 
 #### Step 1: Creating a Database
 
