@@ -8,9 +8,7 @@ This Bash script provides a simple command-line interface for managing databases
 - [Features](#features)
 - [Prerequisites](#prerequisites)
 - [How to Run](#how-to-run)
-- [Examples](#examples)
-- [Contributing](#contributing)
-- [License](#license)
+- [Examples](#example)
 
 ## Usage
 
