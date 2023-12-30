@@ -41,7 +41,7 @@ This script provides a menu-driven interface that allows users to perform the fo
 
 2. Run the script:
 
-    ./bashdb.sh
+    ./dbms.sh
 
 
 3. Follow the on-screen instructions to navigate through the menu and perform actions.
@@ -55,7 +55,7 @@ This script provides a menu-driven interface that allows users to perform the fo
 #### Step 1: Creating a Database
 
 ```bash
-./bashdb.sh
+./dbms.sh
 
 1. Create DB
 2. List DB
